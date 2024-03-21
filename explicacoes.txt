@@ -1,0 +1,80 @@
+SQL -
+DML - Manipulação de dados:
+INSERT, UPDATE E DELETE
+
+DDL - Linguagem de definiçao de dados -
+CREATE E DROP
+
+DCL - Controle de dados -
+GRANT - Autoriza ao usuario executar comandos
+Revoke - Remove ou restringe a capacidade de um usuário de executar comandos.
+
+DTL - Linguagem de transação de dados
+BEGIN WORK (ou BEGIN TRANSACTION) - COMMIT - ROLLBACK
+
+DQL - Consulta de dados
+SELECT - É o principal comando usado em SQL
+
+selecionando mais de um campo com comando sql:
+select deptnum, cargo, salario from fun; // busca somente consultas nessas colunas. 
+
+selecionando um usuario usando clausula where:
+select * from area where deptnum = 10;
+
+usando AND e OR:
+select * from FUN where deptnum = 10 OR COMISSAO IS NOT NULL OR SALARIO <= 2000 AND DEPTNUM = 20; // qualquer condição que seja true, vai satisfazer e vai mostrar o registro.
+
+Estabelecendo prioridade:
+select * from FUN where (deptnum = 10 or COMISSAO is not null or salario <= 2000) and DEPTNUM = 2;
+
+// basicamente, (deptnum = 10 or COMISSAO is not null or salario <= 2000) é um bloco só
+
+///////////
+
+Usando o comando SELECT -
+
+Posso usar um alias, isto é, um apelido de quando eu chamar o campo:
+ex:
+
+SELECT SALARIO as GANHOS, COMISSAO as BONUS from FUN;
+
+// /\ vai mostrar os registros mas as colunas com nomes de 'ganhos' e 'bonus'
+
+e se eu quiser usar o apelido para usar numa clausula?
+SELECT SALARIO as GANHOS, COMISSAO as BONUS from FUN X WHERE GANHOS < 5000; 
+/\ vai mostrar que 'ganhos' não existe, pq o apelido tem que ficar 'salvo' na memória, pra isso façamos:
+
+
+SELECT * FROM ( SALARIO as GANHOS, COMISSAO as BONUS from FUN ) X WHERE GANHOS < 5000; 
+/\ agora posso chamar tranquilamente 'ganhos', que ficará salvo, pq colocamos ( ) e botamos o X.
+
+Agora usando valores de concatenação, apresentando conjunto de resultados:
+SELECT CONCAT (NOME, ' CARGO ', CARGO) AS MSG from FUN WHERE DEPTNUM = 10;
+// vai mostrar o nome do campo como 'MSG', e concatenar a mensagem que eu quis, no caso, " CARGO ".
+ex:
+'CLARA CARGO GERENTE'
+
+---- E como usar condicionais em sql? Usemos 'case when then else'
+SELECT NOME, SALARIO, case when SALARIO <= 2000 then 'BAIXO' when SALARIO >= 4000 then 'ALTO' else 'MEDIO' end as RESULTADO from FUN;
+
+/\ é como se mostrasse um outro campo e imprimisse 'baixo, medio, alto'. 
+
+///////////////
+
+Comando SELECT PARTE 3-
+Vamos limitar a qtd de linhas que nos retorne.
+
+Se eu quiser pegar apenas as primeiras 5 linhas:
+select * from FUN limit 5;
+
+E se eu quiser pegar limitando as linhas de forma aleatoria? Uso order by rand() antes do limit.
+
+SELECT NOME, CARGO FROM FUN ORDER BY RAND() limit 5 
+
+- Mostrando somente os que tem 'comissao null'
+Select * from FUN where comissao is null;
+e o is not null:
+Select * from FUN where comissao is not null;
+
+- Se quiser traduzir 'null', usemos uma função no sql chamada coalesce:
+select coalesce(comissao, 0) from FUN; // onde tiver a linha 'null' em 'comissao', mostre '0'.
