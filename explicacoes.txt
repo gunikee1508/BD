@@ -38,7 +38,7 @@ ex:
 
 SELECT SALARIO as GANHOS, COMISSAO as BONUS from FUN;
 
-// /\ vai mostrar os registros mas as colunas com nomes de 'ganhos' e 'bonus'
+// /\ vai mostrar os registros, mas as colunas com nomes de 'ganhos' e 'bonus'
 
 e se eu quiser usar o apelido para usar numa clausula?
 SELECT SALARIO as GANHOS, COMISSAO as BONUS from FUN X WHERE GANHOS < 5000; 
@@ -55,7 +55,7 @@ ex:
 'CLARA CARGO GERENTE'
 
 ---- E como usar condicionais em sql? Usemos 'case when then else'
-SELECT NOME, SALARIO, case when SALARIO <= 2000 then 'BAIXO' when SALARIO >= 4000 then 'ALTO' else 'MEDIO' end as RESULTADO from FUN;
+SELECT NOME, SALARIO, case when SALARIO <= 2000 then 'BAIXO' when SALARIO >= 4000 then 'ALTO' else 'MEDIO' end as RESULTADO from FUN; // Com end as usamos quando queremos definir um pseudônimo para a coluna em que os resultados da CASE vão ser mostrados
 
 /\ é como se mostrasse um outro campo e imprimisse 'baixo, medio, alto'. 
 
@@ -78,3 +78,39 @@ Select * from FUN where comissao is not null;
 
 - Se quiser traduzir 'null', usemos uma função no sql chamada coalesce:
 select coalesce(comissao, 0) from FUN; // onde tiver a linha 'null' em 'comissao', mostre '0'.
+
+////////////////////
+
+Order by -
+select * from tb_usuarios where dessenha like '@a%' order by idusuario desc; // ordenando por idusuario decrescente
+
+posso usar 'order by' com numero, definindo pela ordem do 'select':
+SELECT NOME, CARGO, SALARIO from FUN where DEPTNUM = 10 order by 3 desc; // Isto é, ordenando pelo 3o parametro do select, isto é, 'salario'.
+
+SELECT NOME, CARGO, SALARIO from FUN where DEPTNUM = 10 order by 2; // ordenando pelo 'cargo', de forma crescente (subentendido ASC);
+
+SELECT NOME, SALARIO, COMISSAO from (select NOME, SALARIO, COMISSAO, case when COMISSAO is null then 0 else 1 end as is_null from FUN) x order by is_null, COMISSAO desc;
+
+// /\ aqui temos uma subconsulta/subquery que seleciona as colunas nome, salario e comissao da tabela fun, onde tem uma expressão condicional que cria uma nova coluna chamada 'is_null', que recebe o valor '0' quando o valor da coluna 'comissao' é nulo e '1' caso contrário. Tem um 'alias' para tal subconsulta chamada 'x'.
+
+// São ordenados pelo valor da coluna is_null, que é '0' para valores nulos de 'COMISSAO', e '1' para valores não nulos. Significa que as linhas com valores nulos de 'COMISSAO' aparecerão primeiro. 
+
+// Se houver empate no critério 'is_null', ou seja, se houver várias linhas com valores nulos de 'COMISSAO', essas linhas serão então ordenadas em ordem decrescente pelo valor da coluna 'COMISSAO'
+
+/////////////////////////
+
+Junção de tabelas -
+Querer fazer junção de vários dados de várias tabelas em uma só. Temos varios operadores, um dos mais usados é o 'UNION', q faz a combinação de várias linhas de várias tabelas. Temos tbm 'UNION ALL', que faz a união de todas as colunas.
+
+SELECT NOME, DEPTNUM from FUN where DEPTNUM = 10 UNION ALL SELECT '--------', null FROM TABELA1 UNION ALL SELECT NOME, DEPTNUM from AREA; // meio que estou criando uma linha ficticia da tabela1 para separar os dados da tabela 'FUN' e 'AREA'. mas vai mostrar os resultados da seleção das tabelas 'FUN' e 'AREA'.
+
+// So com Union agora:
+SELECT DEPTNUM from FUN UNION SELECT DEPTNUM from AREA; // com só o 'Union', ele elimina as duplicatas. com 'unionall', ele não elimina.
+
+Colocando alias:
+SELECT f.NOME, a.CIDADE FROM FUN f, AREA a WHERE f.DEPTNUM = a.DEPTNUM and f.DEPTNUM = 10; // pra diferenciar o DEPTNUM de um e outro, usamos o 'f' e o 'a'. 
+
+//////////
+
+Trabalhando com multiplas tabelas -
+
