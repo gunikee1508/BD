@@ -114,3 +114,7 @@ SELECT f.NOME, a.CIDADE FROM FUN f, AREA a WHERE f.DEPTNUM = a.DEPTNUM and f.DEP
 
 Trabalhando com multiplas tabelas -
 
+SELECT DEPTNUM from AREA WHERE DEPTNUM not in (SELECT DEPTNUM FROM FUN); // not in é para dizer 'que não contém', e (select deptnum from fun) é a subconsulta feita. selecionar onde deptnum não está contido na seleção de deptnum fron fun.
+
+- Eliminar duplicatas, isto é, eliminar valores duplicados, isto é, se cada valor q seja mostrada somente uma vez.
+SELECT DISTINCT DEPTNUM FROM AREA WHERE DEPTNUM not in (select DEPTNUM FROM FUN);

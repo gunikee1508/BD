@@ -1,0 +1,102 @@
+Banco de dados vs base de dados -
+Base da dados - todo e qualquer lugar que armazene informação. Dados em si. ex: excel, bloco de notas, etc, até o BD.
+
+Banco de dados - software que gerencia informação/manipula os dados.  Banco de dados é conhecido como servidor de banco de dados, é um local q acesso às databases.
+
+Servidor de banco de dados - dentro dele eu tenho varios banco de dados/data bases. Um servidor de banco de dados é quem vai armazenar o conjunto de databases que temos.
+
+Data center - Locais onde os servidores de Banco de Dados ficam armazenados
+
+/////////////////////////
+
+Banco de Dados relacional -
+Geralmente, o relacional vai relação com o SQL.
+Benefícios:
+1- Separação física
+Separação dos arquivos fisicos para os arquivos lógicos, posso ter um arquivo fisico em varios computadores, formando um supercomputador - q são chamados de cluster - e tenho um banco de dados único, visualmente vejo um banco mas ele tá em vários computadores, porém virtualmente é um só. 
+
+2- Padronização -
+Comandos que se repetem, são os mesmos, para manipulações, etc. 
+
+3- Realização de operações aritméticas
+
+BD Relacional funciona usando o conceito de tabelas (como as do Excel);
+
+Adicionar colunas que não foram planejadas inicialmente é falha de projeto;
+
+BD Relacional funciona implementando integridade e referência: garantir q as informaçoes sao confiáveis. referencia seria tipo: para cidade, é ideal q se tenha um ID em outra tabela, e aí para referenciar a uma cidade tal, vc coloca o ID dessa cidade na tabela. Garantir que tal ID de tal cidade realmente existe seria a integridade relacional. 
+
+Benefícios: ACID -> Atomicidade, Consistência, Isolamento e Durabilidade. 
+Atomicidade -> trabalhar com transaçoes, tudo dá certo e confirmo ou dá errado e desfaço. 
+Consistência -> Garantir que, após uma determinada transação for executada, eles estejam atualizados.
+Isolamento -> Se não isolar a informação, posso ter leitura suja, fantasmas no BD (ver uma informação que não existe mais).
+Durabilidade -> É a resiliencia, garantir que a informação esteja lá, q são voláteis, q tá tudo seguro, se eu reiniciar o servidor, não perco as informações, etc. 
+
+Escala de milhoes de usuarios, e precisa da integridade, etc, é melhor um BD Relacional. 
+
+-------------
+
+Banco de dados não relacional (NoSQL) - 
+NoSQL é na vdd um falso cognato. Trabalhar com colunas ou tabelas pode acontecer no NoSQL, não necessariamente por ser NoSQL significa que não vai mexer com comandos SQL. É uma outra forma de armazenar dados, sem ser relacional. 
+
+Por que usar NoSQL?
+1- Perfomance e Escala - Como NOSQL trata com dados de mts grandes e q mts vezes nao precisa ter estrutura de dados amarrados, etc, posso crescer minha aplicaçao sem ter q crescer o custo dos meus servidores. 
+
+De que tipo de Banco de Dados NoSQL existe? 
+Tipos:
+Documentos (mais comum)
+Colunas
+Chave/Valor
+Grafo (mais pra questão matemática)
+Temporal (que usam timestamp etc)
+Objeto
+Outros
+
+Beneficio é que no NOSQL tem escalamento horizontal, se tenho escalamento vertical eu tenho aumento de memoria, aumento computacional, q é oq geralmente acontece em BD Relacional. Com escalamento horizontal, posso adicionar novas máquinas, novos computadores, e a informação pode ser dividida nesses vários computadores, ou seja, não to aumentando memoria, etc, apenas to adicionando novas máquinas ao meu cluster, q é melhor.
+
+Beneficio outro:
+Estrutura flexivel - já que não estamos amarrado às restriçoes de um bd relacional, como integridade de dados, referencia, num documento só posso ter todos os dados do meu cliente. Não preciso ter uma tabela de dependente, tabela de cargos, referenciando dados do meu funcionario, por exemplo. 
+
+Problemas:
+Comprometem consistência - posso ter 2 documentos exatamente iguais, por exemplo; Dificuldade com transações ACID. 
+
+MongoDB é o NoSQL mais usado atualmente, e é de tipo documento, mas é hibrido, podendo ser de outro tipo Objeto tbm. 
+
+/////////////
+
+Modelagem de dados -
+Todo processo vai começar com uma modelagem. 
+Um banco de dados é nada mais que um conjunto de tabelas, q tbm são conhecidas como entidades. Dividimos as tabelas/entidades em 2 tipos: tabela principal e tabela de apoio (tbm conhecida como entidade forte e entidade fraca). Existem tabelas q só existem para dar apoio a outra.
+Digamos q eu tenha uma tabela filme. E eu tenho as categorias do filme. Eu terei uma tabela entre 'filmes' e 'categoria' chamada filme_categoria, q é só para dar apoio à tabela 'filme', q é a principal. 
+Usamos a DER, geralmente, chamadas de diagramas de entidade e relacionamento. O relacionamento é a ligação entre as tabelas. Por isso é chamado de banco de dados relacional, pq as tabelas tão sempre ligadas uma a outra. 
+
+Quando for modelar um projeto, faça uma visão macro, comece pelo MVP, isto é, minimo produto viavel, ou seja, quais informações de tal coisa não pode faltar? 
+
+Após fazer toda a visão Macro do projeto, o 2o passo é a Validação, geralmente um teste de mesa/caso de uso, simule uma pessoa usando o sistema, oq q o usuario iria preencher, etc? 
+
+Se sozinho a tabela pode existir, ela é uma tabela principal, e não tabela de apoio. Por ex: num sistema de loja virtual, se tenho tabela de cliente, ela faz sentido ficar sozinha? Sim, agora a tabela 'país' para meu e-commerce, faz sentido ela ficar sozinha? Não faz... 
+
+Tabela de apoio depende da tabela principal. E para tabela principal eu sempre preciso pensar que informações preciso ter do meu cliente, se ela vai se repetir ou não, e se for se repetir, posso jogar numa tabela a parte (por ex como tabela a parte, endereço, cidade, país, etc0 e) e jogar ele como ID. Tipo, na tabela cidade, a cidade RJ ter o ID 0, SP ID 1, etc, e na tabela principal, como a de um usuário, colocar city_id de algum registro/usuário como '1', q vai mostrar q ele é de SP. Isso é descentralização da informação. 
+
+Um BD é o conjunto de várias tabelas. Essas tabelas q vamos quebrando, tem q colocar os campos/tabelas q realmente precisam. 
+
+///////////////////
+
+Descentralização da informação -
+
+Se a informação vier repetida, ela deve ser separada, isto é, em uma tabela separada. Se eu tenho registros em que as pessoas tem bairros repetidos, temos q ter uma tabela 'bairro' separado.
+
+Em uma tabela de clientes com colunas, em vez de ter colunas bairro, cidade, estado e país, eu posso ter uma tabela bairro que aponta para outra tabela cidade que aponta pra estado, q aponta para país...
+
+Normalmente, hj em dia, não armazenamos mais cidade, estado, país etc em banco, apenas o CEP, pq com o CEP consulto uma API de CEP (Ex: viaCEP) e já me traz um resultado completo.
+
+//////////////////
+
+Armadilhas ao projetar um BD -
+- Colocar campos desnecessários
+
+- Cuidado com o varchar, ele é pesado.
+
+- Descentralizar informação apenas quando importante. 
+
+- Não crie tabelas desnecessárias. 
