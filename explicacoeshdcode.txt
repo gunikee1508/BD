@@ -100,3 +100,423 @@ Armadilhas ao projetar um BD -
 - Descentralizar informação apenas quando importante. 
 
 - Não crie tabelas desnecessárias. 
+
+1º fase - Tabelas que não podem faltar.
+2o fase - Tabelas que são de apoio.
+3o fase - O que falta armazenar?
+
+/////////////////
+
+Tipo de dados -
+Numéricos - 
+Tinyint, smallint, mediumint, int e bigint.
+Existem o unsigned e o signed.
+
+Texto - 
+Char é sempre um tamanho fixo, se faço char(11), sempre vai gastar 11 caracteres.
+Varchar(200), pode armazenar no maximo 200 caracteres, são caracteres variáveis. No caso, o registro vai pesar somente o que eu inseri. Cada caractere é 1 byte e soma com + 1 byte q é do varchar. "José" = 4 caracteres. 4 bytes. + 1 byte de var. + 1 byte de tinyint. pesa 6 caracteres. se fosse declarado varchar acima de 255, ai teria q somar +2 bytes + 1 tinyint;
+
+Temos ainda o Blob e o Text. O Blob é para numeros binários e o Text se for armazenar uma informação muito grande.
+
+Enum(), tbm dentro de conceito de string, vc define alguns nomes e escolhe algum valor qd for inserir registro.
+create table clientes (
+    id tinyint unsigned,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite')
+);
+
+insert into clientes values(1, 'José da Silva', 'vip');
+
+select * from clientes;
+
+inseri o tipoCliente no josé em 'vip'.
+
+pode ser outras coisas como tipoRoupa, aí pd ser largo, grande, etc. enum é bem leve. 
+
+/////////////////////
+
+Boolean - V ou F.
+Mysql nao tem tipo de dado booleano, eles são apelidos para tinyint. Se coloco 'bool', ele vai aceitar se colocarmos dado para ele de 0, 1, 10... mas se colocamos 255 irá dar erro, pq é tinyint signed, isto é, so vai até 127 e -128.
+
+/////////////////
+
+Data e hora -
+tipo de data e hora; 
+https://dev.mysql.com/doc/refman/8.0/en/date-and-time-types.html
+timestamp vs datetime -> timestamp armazena de acordo com o formato do servidor.
+
+Manipular data, o padrao é: 
+ano-mes-dia.
+
+///////////
+
+Decimal - 
+Temos float e double para casos de numeros aproximados, tenho casa decimal mas vou arredondar, e o 'decimal' para casos mais precisos. É mais usado o 'decimal', float tá em desuso.
+com o tipo 'decimal(10,2)' significa que posso ter até 10 digitos, isto é: 9999999999 e 2 casas decimais, contando da direita para esquerda: 99999999.99. O máximo é 65 e o maximo de casas decimais é 0-30. 
+https://dev.mysql.com/doc/refman/8.0/en/precision-math-decimal-characteristics.html
+
+apelido para decimal = dec e numeric. ex: dec(10,2); numeric(10,2)
+
+///////////
+
+JSON - 
+É um tipo 'novo' no mysql. JSON. O MySQL enquanto BD Relacional tbm aceita tipo JSON.
+É um padrão de comunicação. Por ex: Se tenho linguagem JAVA e preciso conversar com PHP etc, eu uso o java para gerar JSON para traduzir a informaçao e o php lê o JSON. É um intermediador. 
+
+Qd preciso conectar uma aplicaçao com outra aplicaçao terceira, criamos uma interface. Quando uma aplicaçao tem interface/padrao de comunicaçao com outra aplicação, é chamado de API. Tenho então uma forma de comunicar as 2 aplicações. Antigamente era XML. O JSON so tem informação, par chave valor. 
+
+Padrão json no mysql:
+Usamos '' para mandar um json serializado.
+insert into clientes values (1, 'Luiz', 'vip', 1, '1990-01-01', 3900.00, '{"esporte":"basquete", "leitura":"Biblia", "filme":"Homem de Ferro"}');
+
+Posso inserir tbm um array de objetos no BD:
+insert into clientes values (2, 'Gustavo', 'Platinum', 1, '1990-01-01', 3900.00, '["BMW X5", "Camaro", "Onix"]');
+
+Com array eu mando um conjunto de valores, varias informaçoes separadas por vírgula; Por objeto eu tenho um identificador e um valor para ele.
+
+/////////////////////
+
+Constraints - Entendendo restrições:
+Veremos como trabalhar com relacionamento, isto é, relacionar uma tabela a outra.
+
+Identificadores -
+Nomes de identificadores podem ter até 64 caracteres; nomes de banco, tabela, coluna, etc. a exceção é 'alias', que pode ter até 256 -> https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html
+
+Compound Statement Label pode ter até 16 caracteres. oq é isso? 
+se usarmos:
+delimiter $$
+create procedure sp_exibe(id int)
+begin
+    loopexibe : LOOP
+        set id = id + 1;
+        if id < 10 then iterate loopexibe; end if;
+        leave loopexibe;
+    END LOOP loopexibe;
+end
+$$
+
+drop procedure sp_exibe;
+
+para nome totalmente qualificado: NOMEDOBD.NOMEDATABELA
+create table test.cliente[...]; ----> banco de dados com nome 'test'.
+
+para dar de outro banco: 'sakila' é o nome de um banco de dados, e 'clientes' é o nome de uma tabela;
+select * from sakila.clientes; 
+
+Para um outro nome totalmente qualificado:
+select sakila.clientes.nomeCliente from sakila.clientes;
+
+/\ // sakila é o nome do banco de dados.
+clientes é o nome da tabela dentro do banco de dados sakila.
+nomeCliente é uma coluna na tabela clientes.
+
+- Sem espaços em nomes de tabela;
+
+Com BD posso usar template string ->
+create table `clientes-exclusivos` ( [...] ); -- nome de tabela 'clientes'.
+
+/\ se eu fizer isso, vamos ter que usar isso para qualquer outro comando SQL:
+select `clientes-exclusivos`.nomeCliente from sakila.clientes;
+
+create table `clientes-exclusivos` (
+    id tinyint unsigned,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento date,
+    renda decimal (10,2),
+    hobby json,
+);
+
+select `clientes-exclusivos`.nomeCliente from db24.clientes;
+/\ `clientes-exclusivos` é o nome da tabela.
+nomeCliente é uma coluna dentro dessa tabela.
+
+'db24' é o nome do BD que contém a tabela 'clientes-exclusivos'.
+
+//////////////
+
+Constraints -
+Significa 'restrição'. Num BD Relacional, precisamos: Integridade dos dados, que chamamos de consistência dos dados e a segunda é a integridade referencial; 
+
+Consistencia dos dados envolve ver se os dados tem 2 problemas: duplicidade e anomalia. Duplicidade = dados se repetem onde não deveriam.
+
+- Quando criamos constraints, nos prevenimos da duplicidade e da anomalia.
+
+Integridade referencial -> garantir que as tabelas estão amarradas, mas só posso receber uma informação de uma tabela se ela realmente existir lá.
+ex:
+idEndereco: 1 | tabela endereco, id 1 idBairro: 1 | tabela bairro, id 1, idcidade: 1 | tabela cidade, id: 1, iduf: 1 | tabela uf, id: 1, idestado: 1 | tabela estado id 1;
+
+Existem várias constraints: 
+primary key, foreign key, etc. 
+
+////////////////
+
+Primary Key -
+O metadado da página de dadso traz informação sobre ela. Chave primaria em campo texto tem um problema q toda vez que inserir um texto que for diferente do texto anterior, ele organiza em ordem alfabetica. Portanto, mesmo que não tenha dados repetidos, terá problema quando ficar volumosa. Chave primaria em uma coluna numerica fica melhor, não necessariamente precisa ser int, podendo ser tinyint; 
+
+Chave primária:
+Evita duplicidade; Obriga preenchimento e é índice fisico. 
+-----> Pode colocar direto 'primary key' e é ideal colocar logo em seguida auto_increment. Pra eu usar 'auto_increment', preciso colocar 'primary key':
+
+create table cliente (
+    id tinyint unsigned not null primary key auto_increment,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento date,
+    renda decimal (10,2),
+    hobby json,
+);
+
+- Outra maneira criar uma primary key:
+create table cliente (
+    id tinyint unsigned not null primary key auto_increment,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento date,
+    renda decimal (10,2),
+    hobby json,
+    constraint pk_cli primary key(id) 
+);
+
+-- constraint pk_cli primary key(id) é uma maneira de definir primary key também, onde pk é a reduçao para primary key, evite usar mesmos nomes para constraint, tipo:
+constraint un_cli unique(emailCliente)
+
+//////////////
+
+Foreign Key -
+Chave estrangeira -> Serve para integridade referencial, ou seja, garanto que o registro de uma tabela que precisa estar amarrada de uma tabela, antes de eu fazer esse registro, eu verifico se ele existe. 
+
+create table montadora (
+    id int not null primary key auto_increment,
+    nome varchar(255)
+);
+
+create table veiculo (
+    id int not null primary key auto_increment,
+    modelo varchar(255),
+    anoFabricacao year,
+    anoModelo year,
+    cor varchar(50),
+    idMontadora int,
+    constraint fk_veiculo foreign key (idMontadora) references montadora(id)
+);
+
+insert into montadora values (null, 'Chevrolet'); // tem que fazer registro em 'montadora' antes de 'veiculo'
+insert into veiculo values(null, 'Onix', 2021, 2022, 'Prata', 1); 
+
+-- constraint fk_veiculo foreign key (idMontadora) references montadora(id) significa que, idMontadora será o nome da minha chave secundaria fazendo referencia a coluna 'id' da tabela 'montadora'
+
+----- Toda chave estrangeira faz referência a alguma chave primária, sempre.
+
+Retornando o modelo e o nome do veiculo: 
+ select veiculo.modelo, montadora.nome from veiculo inner join montadora on veiculo.idMontadora = montadora.id;
+
+A chave estrangeira não só liga as tabelas, ela tbm garante que só vai inserir o registro em uma, se existir na outra, ou seja, garantindo a integridade referencial. 
+
+/////////////////
+
+Unique - 
+Também chamada de chave secundária. Impede duplicidade porém não vai ser indice fisico, so vai impedir que o registro não aconteça 2 vezes. A unique serve sempre que eu tiver uma coluna que não se repete, ex: email. 
+
+create table cliente (
+    id tinyint unsigned not null auto_increment,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento date,
+    emailCliente varchar(255),
+    renda decimal (10,2),
+    hobby json,
+    constraint pk_cli primary key(id),
+    constraint un_cli unique(emailCliente)
+);
+
+não permite agora que tenha email registrado. é tipo uma 'chave primaria secundaria', so nao tem todos os recursos. 
+
+////////////////
+
+Check -
+Constraint para regra de validação: 
+Se eu quiser que a renda tenha q ser pelo menos maior que o salário minimo?  
+create table cliente (
+    id tinyint unsigned not null auto_increment,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento date,
+    emailCliente varchar(255),
+    renda decimal (10,2),
+    hobby json,
+    constraint pk_cli primary key(id),
+    constraint un_cli unique(emailCliente),
+    constraint ch_cli check (renda >= 1100.00)
+);
+
+insert into clientes values (1, 'Luiz', 'vip', 1, '1990-01-01', 500.00, '{"esporte":"basquete", "leitura":"Biblia", "filme":"Homem de Ferro"}'); // daria erro, pq a 'renda' tem q ser maior que '500'.
+
+insert into clientes values (1, 'Luiz', 'vip', 1, '1990-01-01', 1200.00, '{"esporte":"basquete", "leitura":"Biblia", "filme":"Homem de Ferro"}'); // agora irá permitir. 
+
+para data de nascimento:
+create table cliente (
+    id tinyint unsigned not null auto_increment,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento date,
+    emailCliente varchar(255),
+    renda decimal (10,2),
+    hobby json,
+    constraint pk_cli primary key(id),
+    constraint un_cli unique(emailCliente),
+    constraint ch_cli check (renda >= 1100.00),
+    constraint ch_cli2 check (dataNascimento < '2003-01-01')
+);
+
+insert into clientes values (1, 'Luiz', 'vip', 1, '2003-02-01', 1200.00, '{"esporte":"basquete", "leitura":"Biblia", "filme":"Homem de Ferro"}'); // daria erro, somente a partir de 2002-12-31, por causa do check.  
+
+Outro jeito de fazer, ainda usando data fixa, para ch_cli2 check:
+
+
+create table cliente (
+    id tinyint unsigned not null auto_increment,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento date,
+    emailCliente varchar(255),
+    renda decimal (10,2),
+    hobby json,
+    constraint pk_cli primary key(id),
+    constraint un_cli unique(emailCliente),
+    constraint ch_cli check (renda >= 1100.00),
+    constraint ch_cli2 check (dataNascimento < date_add('2022-01-01', interval - 18 year)) // date_add é uma função do mysql que adiciona uma data.  e é um intervalo e que retiro 18 anos. 2022 - 18 anos = 2004.
+);
+
+insert into clientes values (1, 'Luiz', 'vip', 1, '2003-02-01', 1200.00, '{"esporte":"basquete", "leitura":"Biblia", "filme":"Homem de Ferro"}'); // agora vai deixar normal. 
+
+- O ruim é que ainda ta uma data fixa (2022-01-01). E ainda estamos colocando em uma estrutura de uma tabela. Então não é muito recomendado. 
+
+OBS: -- é comentário no MySQL.
+
+//////////////
+
+Default -
+Valor padrão da constraint - Caso o usuário não mande uma informação, a constraint default é utilizada. 
+
+create table cliente (
+    id tinyint unsigned not null auto_increment,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento datetime default current_timestamp,
+    emailCliente varchar(255) default 'nao@informado.com.br',
+    renda decimal (10,2) default 1100.00,
+    hobby json,
+    constraint pk_cli primary key(id),
+    constraint un_cli unique(emailCliente),
+    constraint ch_cli check (renda >= 1100.00),
+    -- constraint ch_cli2 check (dataNascimento < date_add('2022-01-01', interval - 18 year)) 
+);
+
+-- Transformamos o 'dataNascimento' em 'datetime'.
+
+Para o default entrar em ação, não tenho que passar a coluna no 'insert', tenho que omiti-las.
+
+insert into clientes (nomeCliente, tipoCliente, statusCliente, emailCliente, hobby) values (1, 'Luiz', 'vip', 1, '{"esporte":"basquete", "leitura":"Biblia", "filme":"Homem de Ferro"}');
+
+-- // vai mostrar normal com os valores default. 
+
+create table cliente (
+    id tinyint unsigned not null auto_increment,
+    nomeCliente varchar(255),
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
+    statusCliente tinyint,
+    dataNascimento datetime default current_timestamp,
+    emailCliente varchar(255) default 'nao@informado.com.br',
+    renda decimal (10,2) default 1100.00,
+    hobby json,
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp,
+    constraint pk_cli primary key(id),
+    constraint un_cli unique(emailCliente),
+    constraint ch_cli check (renda >= 1100.00),
+    -- constraint ch_cli2 check (dataNascimento < date_add('2022-01-01', interval - 18 year)) 
+);
+
+// --   created_at timestamp default current_timestamp,
+            updated_at timestamp default current_timestamp,
+para isso que é muito utilizado current_timestamp. 
+
+/////////////////////////
+
+Not Null - 
+Ela diz que basicamente aquele campo é obrigatório ter algum tipo de valor. Permitir valores nulos vc permite q ele faça um armazenamento maior. Not null obriga preenchimento e torna a tabela mais enxuta. Via de regra, geralmente, é not null.
+
+create table clientes (
+    id tinyint unsigned not null auto_increment,
+    nomeCliente varchar(255) not null,
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite') not null,
+    statusCliente tinyint not null,
+    dataNascimento datetime default current_timestamp not null,
+    emailCliente varchar(255) default 'nao@informado.com.br' not null,
+    renda decimal (10,2) default 1100.00 not null,
+    hobby json default '{}',
+    created_at timestamp default current_timestamp not null,
+    updated_at timestamp default current_timestamp not null,
+    constraint pk_cli primary key(id),
+    constraint un_cli unique(emailCliente),
+    constraint ch_cli check (renda >= 1100.00),
+    -- constraint ch_cli2 check (dataNascimento < date_add('2022-01-01', interval - 18 year)) 
+);
+
+// Not null não se contradiz com 'default', na vdd se completam. 'default' é caso omita no insert, ele vai colocar valor padrão, mas se colocar 'null' ele passa por cima do default. not null não permite valor nulo de jeito nenhum. 
+
+
+// Pra não passar vazio o 'nomeCliente':
+
+create table clientes (
+    id tinyint unsigned not null auto_increment,
+    nomeCliente varchar(255) not null,
+    tipoCliente enum('normal', 'vip', 'platinum', 'elite') not null,
+    statusCliente tinyint not null,
+    dataNascimento datetime default current_timestamp not null,
+    emailCliente varchar(255) default 'nao@informado.com.br' not null,
+    renda decimal (10,2) default 1100.00 not null,
+    hobby json default '{}',
+    created_at timestamp default current_timestamp not null,
+    updated_at timestamp default current_timestamp not null,
+    constraint pk_cli primary key(id),
+    constraint un_cli unique(emailCliente),
+    constraint ch_cli check (renda >= 1100.00),
+    constraint ch_cliNome check (length(nomeCliente) > 4)
+);
+
+/////////
+
+MER -
+Modelo Entidade Relacionamento -
+
+Relacionamento entre Tabelas - 
+Tipos de relacionamentos:
+1 tabela conversa com 1 tabela -> 1 registro numa tabela estar associado a somente 1 registro em outra tabela. por exemplo, um cliente estar associado a uma tabela conjuge.
+
+1 tabela conversa com muitos -> Como o nosso exemplo de montadora e veiculos. Uma montadora pode ter vários veículos. 
+
+Muitas tabelas conversam com muitos;
+
+////////////
+
+Relacionamento 1:1 -
+Todo relacionamento 1 para 1 poderia estar na mesma tabela; Toda chave primaria de uma tabela, quando ela é primaria e também estrangeira, eu tenho um relacionamento 1:1. 
+
+create table conjuges(
+id int not null primary key,
+nomeConjuge varchar(255),
+constraint fk_conj foreign key(id) references clientes(id)
+);
+
+-- Identificar relacionamento de uma tabela é pela estrutura dela:
+Se a coluna id é chave primaria e a msm coluna é chave estrangeira, é relacionamento 1:1, pq a primary key não deixa repetir. 
