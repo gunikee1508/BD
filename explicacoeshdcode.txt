@@ -253,7 +253,7 @@ primary key, foreign key, etc.
 ////////////////
 
 Primary Key -
-O metadado da página de dadso traz informação sobre ela. Chave primaria em campo texto tem um problema q toda vez que inserir um texto que for diferente do texto anterior, ele organiza em ordem alfabetica. Portanto, mesmo que não tenha dados repetidos, terá problema quando ficar volumosa. Chave primaria em uma coluna numerica fica melhor, não necessariamente precisa ser int, podendo ser tinyint; 
+O metadado da página de dados traz informação sobre ela. Chave primaria em campo texto tem um problema q toda vez que inserir um texto que for diferente do texto anterior, ele organiza em ordem alfabetica. Portanto, mesmo que não tenha dados repetidos, terá problema quando ficar volumosa. Chave primaria em uma coluna numerica fica melhor, não necessariamente precisa ser int, podendo ser tinyint; 
 
 Chave primária:
 Evita duplicidade; Obriga preenchimento e é índice fisico. 
@@ -271,7 +271,7 @@ create table cliente (
 
 - Outra maneira criar uma primary key:
 create table cliente (
-    id tinyint unsigned not null primary key auto_increment,
+    id tinyint unsigned not null auto_increment,
     nomeCliente varchar(255),
     tipoCliente enum('normal', 'vip', 'platinum', 'elite'),
     statusCliente tinyint,
@@ -520,3 +520,201 @@ constraint fk_conj foreign key(id) references clientes(id)
 
 -- Identificar relacionamento de uma tabela é pela estrutura dela:
 Se a coluna id é chave primaria e a msm coluna é chave estrangeira, é relacionamento 1:1, pq a primary key não deixa repetir. 
+
+///////////////////////
+
+Relacionamento 1:N (1 para muitos) -
+Tipo de relacionamento mais comum. 
+
+Quando o registro de uma tabela puder ter várias referências em uma outra. Por ex, uma montadora pode ter varios veiculos (chevrolet onix, chevrolet camaro, etc).
+
+O ID da tabela mãe, que pode ter dados repetidos, ele ocorre como chave estrangeira e coluna adicional na segunda tabela (a tabela alvo); No caso de montadora e veiculo, o id da tabela montadora visita o id da tabela veículo. 
+
+- Como identificar relacionamento 1:N?
+Uma tabela que está ligada a outra, ela tem um campo que é chave primária nela, mas na outra ela é chave estrangeira. -> constraint fk_veiculo foreign key (idMontadora) references montadora(id)
+
+/////////////////
+
+Relacionamento N:N -
+Um registro de uma tabela pode estar amarrado a vários registros da 2o tabela e ao mesmo tempo um registro da 2o tabela pode estar amarrado a vários registros da primeira. Nesse caso, precisaremos de uma 3o tabela, uma que vai ligar as 2. Com essa 3o tabela, num exemplo, posso dizer qual aluno fez qual curso. Um aluno pode ter vários cursos, ao mesmo tempo que um curso pode ter vários alunos. Então preciso de uma 3o tabela que diga qual aluno e qual curso ele fez. 
+
+create table alunos (
+    id int auto_increment primary key,
+    nomeAluno varchar(255)
+);
+
+insert into alunos(nomeAluno) values ('João'), ('Mateus'), ('Marcus'), ('Rafael'), ('Ronaldo'), ('Guilherme'), ('Vanessa'); 
+
+create table cursos (
+    id int auto_increment primary key,
+    nomeCurso varchar(255)
+);
+
+insert into cursos(nomeCurso) values ('MySQL'), ('SQL Server'), ('MongoDB'), ('Firebase Firestore'), ('Oracle 21c'); 
+
+
+-- Um aluno pode ter vários cursos e vice-versa também, aí que entra a 3o tabela. 
+create table alunoCurso (
+    idAluno int,
+    idCurso int,
+    constraint pk_alunoCurso primary key(idAluno, idCurso),
+    constraint fk_alunoCurso foreign key(idAluno) references alunos(id),
+    constraint fk_alunoCurso2 foreign key(idCurso) references cursos(id)
+);
+
+// /\ idAluno e idCurso sendo chaves primárias é o caso de chave composta, onde um registro é basicamente chave primaria, ele tem que ser unico. A chave primária vai em 2 campos. E ao mesmo tempo cada um vai ser chave estrangeira. 
+
+insert into alunoCurso values (4,5); -- o aluno Rafael fez o curso Oracle
+
+-- agora vamos fazer a consulta:
+ select alunos.nomeAluno, cursos.nomeCurso from alunos inner join alunoCurso on alunos.id = alunoCurso.idAluno inner join cursos on alunoCurso.idCurso = cursos.id;
+ 
+ // /\ me retorna o nome do aluno e o curso que ele fez.
+
+Outro ex relacionamento N:N, um cliente pode comprar varios produtos, e um produto pode ser comprado por varios clientes.
+
+///////////////////////////////
+
+DDL - Data Definition Language -
+É ligado a estruturas. Tudo que eu crio, altero dentro do banco, estruturalmente. Comandos CREATE, ALTER e DROP. 
+
+Dando privilégios a usuarios:
+create role `administrator`;
+grant all privileges on sakila.* to `administrator`; -- sakila.* é todas as estruturas do banco 'sakila'
+
+create user 'novoUsuario'@'localhost' default role `administrator`; -- cria o usuario com privilegio administrador.
+
+alter user 'novoUsuario'@'localhost' identified by '12345'; -- colocando senha
+
+-- Outra forma: E se eu quisesse setar todos os privilégios de administrador pro usuário? 
+create user 'usuarioNovo'@'%.%.%.%' identified by '12345';
+grant `administrator` to 'usuarioNovo'@'%.%.%.%';
+
+
+Criando usuario:
+create user 'user'@'localhost'
+    identified by '12345'; 
+
+-- user senha '12345'.
+
+-- Apagar usuario:
+drop user 'user'@'localhost';
+
+//////////////////////
+
+Create view - 
+É uma forma de proteção às colunas.
+
+create view v_exibeCliente as select id, nomeCliente as cliente, emailCliente as email from cliente;
+
+-- -----------
+Outro jeito de criar / alterar a view seria:
+create or replace definer = 'glaucio'@'localhost' sql security invoker view v_exibeCliente as select id, nomeCliente as cliente, emailCliente as email from cliente;
+
+-- onde basicamente em 'definer' eu defino quem é o dono da view. e em sql security invoker eu posso usar 'sql security invoker' ou 'sql security definer'; qual a diferença? se eu tenho um usuario do meu sistema ta chamando essa view, se for 'invoker' é, antes de executar a view, veja os privilegios de quem ta chamando a view, ver se ele pode ver esses fatos, entao carrego os privilegios de quem quer ver a view. se for 'definer', vou usar os privilégios de quem criou a view. 
+
+create or replace definer = 'glaucio'@'localhost' sql security invoker view v_exibeCliente as select id, nomeCliente as cliente, emailCliente as email from cliente with check option; -- with check option é para garantir que so vai inserir dados na tabela se tiver a clausula 'where'.
+
+////////////////////
+
+Create Procedure -
+Por ex, se alguem cria uma determina regra q vc so pode inserir um cliente se esse cliente ja tiver algum cadastro em alguma outra tabela? Ou se a renda do cliente atende um requisito... etc. Cuidado pra criar procedure e colocar regra de negocio no banco, não faça isso. Não controle as regras no banco, use a linguagem de programação para isto. 
+
+Procedure é: um ou mais comandos que posso agrupar e chamar de qualquer lugar passando parametros; Parecido com a view, mas a view so posso ter um comando nela q é o select, na procedure posso ter qualquer comando; 
+
+
+delimiter //
+
+create procedure sp_contaCidade (in pais char(3), out cidades int) -- aqui no parametro posso ter 'in', 'out' ou 'inout', ou seja, parametro de entrada, saida e inout é q pode ser entrada e saida. 'in' significa que quem for chamar esta procedure tem q mandar dentro dela uma informação, ai coloco nome de uma variavel.
+
+begin
+
+    select count(*) into cidades from world.city where CountryCode = pais; -- conte tudo e jogue dentro da variavel 'cidades'
+
+
+end
+//
+
+-- Para chamar uma procedure, usamos: 'call'
+call sp_contaCidade('FRA', @cities)// -- to passando o parametro 'FRA' de frança para a variavel 'pais', @cities to criando uma variavel global que posso chamar depois q executo
+
+select @cities as total//
+
+delimiter ;
+
+// Com procedure, eu agrupo informações; muito mais rápido chamar uma procedure do que chamar um comando DML
+// Toda vez que eu crio uma procedure, eu crio um plano de execução q é reutilizado sempre q a procedure é chamada.
+
+////////////////////
+
+Alter Table -
+Mexe com a estrutura;
+
+Renomeando o nome de uma coluna:
+- alter table clientes rename column renda to rendaCliente;
+
+Removendo uma coluna via alter table:
+- alter table clientes drop column statusCliente;
+
+Adicionado uma coluna que originalmente não existia:
+alter table clientes add column statusCliente tinyint signed not null default 1; -- todos que já estavam na tabela já começou com o valor '1';
+
+Criando constraint:
+alter table cliente add constraint ch_cliente check (statusCliente between 1 and 3); -- statusCliente so pode ter valor entre 1 e 3, se for '4' nao vale mais.
+
+Removendo constraint:
+alter table cliente drop constraint ch_cliente;
+
+////////////////////////////
+
+Drop Table -
+Apagar tabela:
+drop table nometabela;
+
+drop table if exists NOMETABELA; -- apaga se existir
+
+/////////////////
+
+Drop DataBase -
+drop database if exists NOMEBANCODEDADOS;
+
+/////////////////
+
+DQL - Data Query Language - Linguagem de Consulta de Dados
+
+SELECT - Exibe dados de uma ou mais tabelas; Pertence ao grupo DQL.
+
+Select * from cliente; -- * significa 'todas as colunas'.
+
+- O select pode gerar uma coluna que não existe na minha tabela, veja:
+select 'Teste' as coluna_virtual; -- irá mostrar a coluna "coluna_virtual" com registro 'Teste'.
+
+- Mudando nome da coluna:
+select id, nomeCliente as nome, emailCliente as email from cliente; -- 'as' é um alias, simulação.
+
+- Posso colocar um apelido pra tabela tbm, isso se chama Nome Totalmente Qualificado:
+select cli.id, cli.nomeCliente as nome, emailCliente as email from cliente cli;
+
+Posso ate colocar com o nome do banco antes:
+select cli.id, cli.nomeCliente as nome, emailCliente as email from bancodb.cliente cli; -- 'bancodb' é o nome do banco.
+
+////////////////
+
+DML - 
+Data Manipulation Language -
+
+Insert permite cadastrar dados dentro da tabela; Existem 2 tipos de insert, o insert posicional que vou inserir em todos os campos da tabela e na ordem em que foram criados; E o Insert declarativo que vou especificar quais campos quero inserir e valores. No insert declarativo não sou obrigado a inserir todos os campos (a menos q seja especificado obrigatorio) e nem preciso inserir na ordem em q a tabela foi criada.
+
+Sou obrigado a inserir uma informação quando tem not null e não tem default. 
+
+-- Insert posicional
+insert into cliente values (null, 'José', 'ze@gmail.com', 5000.00);
+
+-- Insert declarativo
+insert into cliente (nomeCliente, emailCliente) values ('José', 'ze@gmail.com');
+
+-------> O 'into' é opcional no mysql, em 'insert into'.
+
+///////////////
+
+Update -
